@@ -17,46 +17,49 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+/*
+ * Creation : 20 avr. 2015
+ */
 package org.sonar.samples.java.checks;
 
 import java.util.Collections;
 import java.util.List;
 import org.sonar.check.Rule;
 import org.sonar.plugins.java.api.IssuableSubscriptionVisitor;
-import org.sonar.plugins.java.api.semantic.Symbol.MethodSymbol;
-import org.sonar.plugins.java.api.semantic.Type;
-import org.sonar.plugins.java.api.tree.MethodTree;
+import org.sonar.plugins.java.api.tree.ClassTree;
 import org.sonar.plugins.java.api.tree.Tree;
 
-@Rule(key = "AvoidMethodWithSameTypeInArgument")
 /**
- * To use subsctiption visitor, just extend the IssuableSubscriptionVisitor.
+ * Only to bring out the unit test requirement about classpath when bytecode methods used (see rule unit test class)
  */
-public class MyCustomSubscriptionRule extends IssuableSubscriptionVisitor {
+@Rule(key = "AvoidSuperClass")
+public class I7AvoidSuperClassRule extends IssuableSubscriptionVisitor {
+
+  public static final List<String> SUPER_CLASS_AVOID = Collections.singletonList("org.slf4j.Logger");
 
   @Override
   public List<Tree.Kind> nodesToVisit() {
     // Register to the kind of nodes you want to be called upon visit.
-    return Collections.singletonList(Tree.Kind.METHOD);
+    return Collections.singletonList(Tree.Kind.CLASS);
   }
 
   @Override
   public void visitNode(Tree tree) {
-    // Cast the node to the correct type :
-    // in this case we registered only to one kind so we will only receive MethodTree see Tree.Kind enum to know about which type you can
-    // cast depending on Kind.
-    MethodTree methodTree = (MethodTree) tree;
-    // Retrieve symbol of method.
-    MethodSymbol methodSymbol = methodTree.symbol();
-    Type returnType = methodSymbol.returnType().type();
-    // Check method has only one argument.
-    if (methodSymbol.parameterTypes().size() == 1) {
-      Type argType = methodSymbol.parameterTypes().get(0);
-      // Verify argument type is same as return type.
-      if (argType.is(returnType.fullyQualifiedName())) {
-        // raise an issue on this node of the SyntaxTree
-        reportIssue(tree, "message");
-      }
+    // Visit CLASS node only => cast could be done
+    ClassTree treeClazz = (ClassTree) tree;
+
+    // No extends => stop to visit class
+    if (treeClazz.superClass() == null) {
+      return;
+    }
+
+    // For 'symbolType' usage, jar in dependencies must be on classpath, !unknownSymbol! result otherwise
+    String superClassName = treeClazz.superClass().symbolType().fullyQualifiedName();
+
+    // Check if superClass avoid
+    if (SUPER_CLASS_AVOID.contains(superClassName)) {
+      reportIssue(tree, String.format("The usage of super class %s is forbidden", superClassName));
     }
   }
+
 }

@@ -1,10 +1,10 @@
 class A {
 
   int foo() {}
-  int foo(int a) {} // Noncompliant {{message}}
+  int foo(int a) {} // Noncompliant {{Avoid methods returning same type as their argument!}}
   int foo(int a, int b) {}
 
-  Object foo(Object a){} // Noncompliant {{message}}
-  String foo(String a){} // Noncompliant {{message}}
+  Object foo(Object a){} // Noncompliant {{Avoid methods returning same type as their argument!}}
+  String foo(String a){} // Noncompliant {{Avoid methods returning same type as their argument!}}
   String foo(Object a){}
 }
